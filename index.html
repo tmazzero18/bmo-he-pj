@@ -5,50 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Validação BMO – HE PJ</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- MSAL.js — autenticação Microsoft sem Azure AD registration manual -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library-for-js/3.18.0/msal-browser.min.js"></script>
 <style>
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #1c2330;
-    --border: #30363d;
-    --border-light: #21262d;
-    --text: #e6edf3;
-    --text-muted: #7d8590;
-    --text-dim: #484f58;
-    --accent: #2f81f7;
-    --accent-glow: rgba(47,129,247,0.15);
-    --green: #3fb950;
-    --green-dim: rgba(63,185,80,0.12);
-    --yellow: #d29922;
-    --yellow-dim: rgba(210,153,34,0.12);
-    --orange: #e3b341;
-    --orange-dim: rgba(227,179,65,0.10);
-    --purple: #bc8cff;
-    --purple-dim: rgba(188,140,255,0.12);
-    --red: #f85149;
-    --red-dim: rgba(248,81,73,0.12);
-    --radius: 10px;
-    --radius-sm: 6px;
+    --bg: #0d1117; --surface: #161b22; --surface2: #1c2330;
+    --border: #30363d; --border-light: #21262d;
+    --text: #e6edf3; --text-muted: #7d8590; --text-dim: #484f58;
+    --accent: #2f81f7; --accent-glow: rgba(47,129,247,0.15);
+    --green: #3fb950; --green-dim: rgba(63,185,80,0.12);
+    --yellow: #d29922; --yellow-dim: rgba(210,153,34,0.12);
+    --orange: #e3b341; --orange-dim: rgba(227,179,65,0.10);
+    --purple: #bc8cff; --purple-dim: rgba(188,140,255,0.12);
+    --red: #f85149; --red-dim: rgba(248,81,73,0.12);
+    --radius: 10px; --radius-sm: 6px;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-  header {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
-    height: 64px; position: sticky; top: 0; z-index: 100;
+  /* LOGIN SCREEN */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column; gap: 24px; padding: 40px;
   }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px; width: 380px; max-width: 100%; text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+  .login-logo { background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .06em; padding: 7px 14px; border-radius: var(--radius-sm); display: inline-block; margin-bottom: 20px; }
+  .login-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .login-card p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; }
+  .ms-login-btn {
+    width: 100%; padding: 12px 20px; border-radius: var(--radius-sm);
+    background: #0078d4; color: #fff; border: none;
+    font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: all .18s;
+  }
+  .ms-login-btn:hover { background: #106ebe; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,120,212,.4); }
+  .ms-login-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .login-note { font-size: 11px; color: var(--text-dim); margin-top: 16px; line-height: 1.5; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; }
   .header-left { display: flex; align-items: center; gap: 16px; }
   .logo-badge { background: var(--accent); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .06em; padding: 5px 10px; border-radius: var(--radius-sm); }
   header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
   .header-right { display: flex; align-items: center; gap: 12px; }
+  .user-chip { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); padding: 5px 12px; border-radius: 99px; font-size: 12px; color: var(--text-muted); }
+  .user-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
   .sp-link { display: inline-flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-sm); transition: all .18s; }
   .sp-link:hover { background: var(--accent-glow); border-color: var(--accent); }
-  .refresh-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .18s; }
-  .refresh-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-glow); }
-  .refresh-btn.spinning svg { animation: spin .7s linear infinite; }
+  .icon-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .18s; }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-glow); }
+  .icon-btn.spinning svg { animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* MAIN */
   main { max-width: 1200px; margin: 0 auto; padding: 36px 40px 60px; }
   .section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
   .last-update { font-size: 11px; color: var(--text-dim); font-family: 'DM Mono', monospace; text-align: right; margin-top: -24px; margin-bottom: 28px; }
@@ -78,16 +92,16 @@
   .progress-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 36px; }
   .progress-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; }
   .progress-bar { display: flex; height: 12px; border-radius: 99px; overflow: hidden; gap: 2px; }
-  .seg { height: 100%; transition: width .6s cubic-bezier(.4,0,.2,1); border-radius: 99px; }
+  .seg { height: 100%; transition: width .6s cubic-bezier(.4,0,.2,1); border-radius: 99px; min-width: 0; }
   .seg.aprovado { background: var(--green); } .seg.pend1 { background: var(--yellow); }
-  .seg.pend2    { background: var(--orange); } .seg.pend3 { background: var(--purple); }
-  .seg.reprovado{ background: var(--red); }
+  .seg.pend2 { background: var(--orange); } .seg.pend3 { background: var(--purple); }
+  .seg.reprovado { background: var(--red); }
   .legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 12px; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
   .legend-dot.aprovado { background: var(--green); } .legend-dot.pend1 { background: var(--yellow); }
-  .legend-dot.pend2    { background: var(--orange); } .legend-dot.pend3 { background: var(--purple); }
-  .legend-dot.reprovado{ background: var(--red); }
+  .legend-dot.pend2 { background: var(--orange); } .legend-dot.pend3 { background: var(--purple); }
+  .legend-dot.reprovado { background: var(--red); }
 
   .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
   @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
@@ -119,7 +133,6 @@
   .empty-state { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 13px; }
   .empty-state svg { opacity: .3; margin: 0 auto 12px; display: block; }
 
-  /* PAINEL REPROCESSAMENTO */
   .repro-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .repro-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); }
   .repro-header h2 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -133,7 +146,6 @@
 
   .warning-box { background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.25); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: var(--yellow); line-height: 1.5; margin-bottom: 16px; display: flex; gap: 8px; align-items: flex-start; }
   .warning-box svg { flex-shrink: 0; margin-top: 1px; }
-
   .step-list { margin-bottom: 16px; }
   .step-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
   .step-num { width: 20px; height: 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: 50%; font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -147,7 +159,6 @@
   .btn-pa:hover { background: rgba(0,120,212,.22); border-color: #4da6ff; }
   .repro-btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-  /* MODAL */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 420px; max-width: 92vw; animation: modalIn .2s ease; box-shadow: 0 24px 64px rgba(0,0,0,.7); }
@@ -167,147 +178,159 @@
   .btn-confirm-repro { background: var(--red); color: #fff; border: none; }
   .btn-confirm-repro:hover { background: #ff6b67; }
 
-  /* LOADING */
   .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(13,17,23,.85); backdrop-filter: blur(4px); z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
   .loading-overlay.open { display: flex; }
   .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
   .loading-msg { font-size: 14px; color: var(--text-muted); }
 
-  /* TOAST */
   #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
   .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 18px; font-size: 13px; color: var(--text); pointer-events: all; animation: slideIn .25s ease; max-width: 340px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
   .toast.success { border-left: 3px solid var(--green); } .toast.error { border-left: 3px solid var(--red); } .toast.info { border-left: 3px solid var(--accent); }
   @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
+
+  #appScreen { display: none; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <span class="logo-badge">BMO</span>
-    <h1>Validação BMO – HE PJ</h1>
-  </div>
-  <div class="header-right">
-    <a class="sp-link" href="https://engit.sharepoint.com/sites/BMO/Lists/HE%20PJ/AllItems.aspx?sortField=DatadaSolicita%5Fx00e7%5F%5Fx00e3%5Fo&isAscending=true&viewid=22d44f44%2D0074%2D4b53%2Db327%2D15648eddb97f" target="_blank">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      Abrir Lista SharePoint
-    </a>
-    <button class="refresh-btn" id="refreshBtn" title="Atualizar dados" onclick="refreshData()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+<!-- TELA DE LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">BMO</div>
+    <h2>Validação BMO – HE PJ</h2>
+    <p>Faça login com sua conta Microsoft para acessar os dados da lista HE PJ no SharePoint.</p>
+    <button class="ms-login-btn" id="loginBtn" onclick="doLogin()">
+      <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+      Entrar com Microsoft
     </button>
+    <p class="login-note">Suas credenciais são gerenciadas pela Microsoft.<br>Esta página não armazena senhas.</p>
   </div>
-</header>
+</div>
 
-<main>
-  <p class="last-update" id="lastUpdate">Última atualização: —</p>
-
-  <p class="section-label">Visão Geral</p>
-  <div class="kpi-grid">
-    <div class="kpi-card total">    <div class="kpi-label">Total de IDs</div>      <div class="kpi-value" id="kpiTotal">—</div><div class="kpi-pct">100%</div></div>
-    <div class="kpi-card aprovado"> <div class="kpi-label">Aprovado</div>           <div class="kpi-value" id="kpiAprov">—</div><div class="kpi-pct" id="pctAprov">—</div></div>
-    <div class="kpi-card pend1">    <div class="kpi-label">Pend. 1ª Aprov.</div>  <div class="kpi-value" id="kpiPend1">—</div><div class="kpi-pct" id="pctPend1">—</div></div>
-    <div class="kpi-card pend2">    <div class="kpi-label">Pend. 2ª Aprov.</div>  <div class="kpi-value" id="kpiPend2">—</div><div class="kpi-pct" id="pctPend2">—</div></div>
-    <div class="kpi-card pend3">    <div class="kpi-label">Pend. 3ª Aprov.</div>  <div class="kpi-value" id="kpiPend3">—</div><div class="kpi-pct" id="pctPend3">—</div></div>
-    <div class="kpi-card reprovado"><div class="kpi-label">Reprovado</div>          <div class="kpi-value" id="kpiReprov">—</div><div class="kpi-pct" id="pctReprov">—</div></div>
-  </div>
-
-  <div class="progress-wrap">
-    <div class="progress-title">Distribuição por Status</div>
-    <div class="progress-bar">
-      <div class="seg aprovado"  id="segAprov"  style="width:0%"></div>
-      <div class="seg pend1"     id="segPend1"  style="width:0%"></div>
-      <div class="seg pend2"     id="segPend2"  style="width:0%"></div>
-      <div class="seg pend3"     id="segPend3"  style="width:0%"></div>
-      <div class="seg reprovado" id="segReprov" style="width:0%"></div>
+<!-- TELA PRINCIPAL -->
+<div id="appScreen">
+  <header>
+    <div class="header-left">
+      <span class="logo-badge">BMO</span>
+      <h1>Validação BMO – HE PJ</h1>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot aprovado"></div>Aprovado</div>
-      <div class="legend-item"><div class="legend-dot pend1"></div>Pend. 1ª Aprovação</div>
-      <div class="legend-item"><div class="legend-dot pend2"></div>Pend. 2ª Aprovação</div>
-      <div class="legend-item"><div class="legend-dot pend3"></div>Pend. 3ª Aprovação</div>
-      <div class="legend-item"><div class="legend-dot reprovado"></div>Reprovado</div>
+    <div class="header-right">
+      <div class="user-chip">
+        <div class="user-dot"></div>
+        <span id="userName">—</span>
+      </div>
+      <a class="sp-link" href="https://engit.sharepoint.com/sites/BMO/Lists/HE%20PJ/AllItems.aspx?sortField=DatadaSolicita%5Fx00e7%5F%5Fx00e3%5Fo&isAscending=true&viewid=22d44f44%2D0074%2D4b53%2Db327%2D15648eddb97f" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Lista SharePoint
+      </a>
+      <button class="icon-btn" id="refreshBtn" title="Atualizar" onclick="refreshData()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="icon-btn" title="Sair" onclick="doLogout()" style="color:var(--red-dim);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
-  </div>
+  </header>
 
-  <div class="two-col">
-    <!-- TABELA -->
-    <div>
-      <p class="section-label">Todos os IDs da Lista</p>
-      <div class="panel">
-        <div class="panel-header">
-          <h2>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            Lista HE PJ
-          </h2>
-          <span style="font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;" id="totalCount">—</span>
+  <main>
+    <p class="last-update" id="lastUpdate">Última atualização: —</p>
+
+    <p class="section-label">Visão Geral</p>
+    <div class="kpi-grid">
+      <div class="kpi-card total">    <div class="kpi-label">Total de IDs</div>      <div class="kpi-value" id="kpiTotal">—</div><div class="kpi-pct">100%</div></div>
+      <div class="kpi-card aprovado"> <div class="kpi-label">Aprovado</div>           <div class="kpi-value" id="kpiAprov">—</div><div class="kpi-pct" id="pctAprov">—</div></div>
+      <div class="kpi-card pend1">    <div class="kpi-label">Pend. 1ª Aprov.</div>   <div class="kpi-value" id="kpiPend1">—</div><div class="kpi-pct" id="pctPend1">—</div></div>
+      <div class="kpi-card pend2">    <div class="kpi-label">Pend. 2ª Aprov.</div>   <div class="kpi-value" id="kpiPend2">—</div><div class="kpi-pct" id="pctPend2">—</div></div>
+      <div class="kpi-card pend3">    <div class="kpi-label">Pend. 3ª Aprov.</div>   <div class="kpi-value" id="kpiPend3">—</div><div class="kpi-pct" id="pctPend3">—</div></div>
+      <div class="kpi-card reprovado"><div class="kpi-label">Reprovado</div>           <div class="kpi-value" id="kpiReprov">—</div><div class="kpi-pct" id="pctReprov">—</div></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-title">Distribuição por Status</div>
+      <div class="progress-bar">
+        <div class="seg aprovado"  id="segAprov"  style="width:0%"></div>
+        <div class="seg pend1"     id="segPend1"  style="width:0%"></div>
+        <div class="seg pend2"     id="segPend2"  style="width:0%"></div>
+        <div class="seg pend3"     id="segPend3"  style="width:0%"></div>
+        <div class="seg reprovado" id="segReprov" style="width:0%"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot aprovado"></div>Aprovado</div>
+        <div class="legend-item"><div class="legend-dot pend1"></div>Pend. 1ª Aprovação</div>
+        <div class="legend-item"><div class="legend-dot pend2"></div>Pend. 2ª Aprovação</div>
+        <div class="legend-item"><div class="legend-dot pend3"></div>Pend. 3ª Aprovação</div>
+        <div class="legend-item"><div class="legend-dot reprovado"></div>Reprovado</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="section-label">Todos os IDs da Lista</p>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Lista HE PJ
+            </h2>
+            <span style="font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace;" id="totalCount">—</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr><th>ID Form</th><th>Status</th><th>Data Solicitação</th><th>Ação</th></tr>
+              </thead>
+              <tbody id="itemsTableBody"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <div>Carregando dados...</div>
+            </div>
+          </div>
         </div>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>ID Form</th>
-                <th>Status</th>
-                <th>Data Solicitação</th>
-                <th>Ação</th>
-              </tr>
-            </thead>
-            <tbody id="itemsTableBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyState">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            <div>Carregando dados do SharePoint...</div>
+      </div>
+
+      <div>
+        <p class="section-label">Reprocessamento</p>
+        <div class="repro-panel">
+          <div class="repro-header">
+            <h2>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.44"/></svg>
+              Reprocessar ID
+            </h2>
+            <p>Digite o ID ou clique em <strong>Selecionar</strong> na tabela.</p>
+          </div>
+          <div class="repro-body">
+            <div class="warning-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>O item será <strong>excluído da lista</strong> antes do reprocessamento. Ação irreversível.</span>
+            </div>
+            <div class="step-list">
+              <div class="step-item"><div class="step-num">1</div><span>Informe o ID e clique em <strong>Excluir e Reprocessar</strong>.</span></div>
+              <div class="step-item"><div class="step-num">2</div><span>O item é excluído automaticamente da lista HE PJ.</span></div>
+              <div class="step-item"><div class="step-num">3</div><span>O Power Automate abre para você clicar em <strong>Executar novamente</strong>.</span></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="idInput">ID Form com Erro</label>
+              <input class="form-input" id="idInput" type="number" min="1" placeholder="Ex: 42" autocomplete="off" oninput="validateForm()">
+            </div>
+            <button class="repro-btn btn-danger" id="deleteBtn" disabled onclick="handleDelete()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+              Excluir do SharePoint
+            </button>
+            <button class="repro-btn btn-primary" id="reproBtn" disabled onclick="confirmReprocessamento()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.44"/></svg>
+              Excluir e Reprocessar
+            </button>
+            <button class="repro-btn btn-pa" onclick="openPowerAutomate()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              Abrir Fluxo no Power Automate
+            </button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- PAINEL REPROCESSAMENTO -->
-    <div>
-      <p class="section-label">Reprocessamento</p>
-      <div class="repro-panel">
-        <div class="repro-header">
-          <h2>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.44"/></svg>
-            Reprocessar ID
-          </h2>
-          <p>Digite o ID com erro ou clique em <strong>Selecionar</strong> na tabela. O item será excluído e você será redirecionado ao Power Automate.</p>
-        </div>
-        <div class="repro-body">
-          <div class="warning-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>O item será <strong>excluído da lista do SharePoint</strong> antes do reprocessamento. Esta ação não pode ser desfeita.</span>
-          </div>
-
-          <div class="step-list">
-            <div class="step-item"><div class="step-num">1</div><span>Informe o ID e clique em <strong>Excluir e Reprocessar</strong>.</span></div>
-            <div class="step-item"><div class="step-num">2</div><span>O item é excluído automaticamente da lista HE PJ.</span></div>
-            <div class="step-item"><div class="step-num">3</div><span>Você é redirecionado ao Power Automate — clique em <strong>Executar</strong> na execução com erro.</span></div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="idInput">ID Form com Erro</label>
-            <input class="form-input" id="idInput" type="number" min="1" placeholder="Ex: 42" autocomplete="off" oninput="validateForm()">
-          </div>
-
-          <button class="repro-btn btn-danger" id="deleteBtn" disabled onclick="handleDelete()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-            Excluir do SharePoint
-          </button>
-
-          <button class="repro-btn btn-primary" id="reproBtn" disabled onclick="confirmReprocessamento()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.44"/></svg>
-            Excluir e Reprocessar
-          </button>
-
-          <button class="repro-btn btn-pa" onclick="openPowerAutomate()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-            Abrir Fluxo no Power Automate
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</main>
+  </main>
+</div>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay">
@@ -318,9 +341,9 @@
     <h3>Confirmar Reprocessamento</h3>
     <p>Reprocessar o ID <span class="modal-id" id="modalId"></span>?</p>
     <div class="modal-steps">
-      <div class="modal-step"><span class="modal-step-num">1</span><span>Item <strong>excluído</strong> da lista HE PJ no SharePoint.</span></div>
-      <div class="modal-step"><span class="modal-step-num">2</span><span>Você será <strong>redirecionado</strong> ao Power Automate.</span></div>
-      <div class="modal-step"><span class="modal-step-num">3</span><span>No Power Automate, localize a execução com erro e clique em <strong>"Executar novamente"</strong>.</span></div>
+      <div class="modal-step"><span class="modal-step-num">1</span><span>Item <strong>excluído</strong> da lista HE PJ.</span></div>
+      <div class="modal-step"><span class="modal-step-num">2</span><span>Power Automate abre automaticamente.</span></div>
+      <div class="modal-step"><span class="modal-step-num">3</span><span>Clique em <strong>"Executar novamente"</strong> na execução com erro.</span></div>
     </div>
     <p style="font-size:12px;">A exclusão <strong>não pode ser desfeita</strong>. Deseja continuar?</p>
     <div class="modal-actions">
@@ -333,33 +356,100 @@
 <!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-msg" id="loadingMsg">Conectando ao SharePoint...</div>
+  <div class="loading-msg" id="loadingMsg">Aguarde...</div>
 </div>
 
 <div id="toast-container"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════
-// CONFIGURAÇÕES FIXAS — invisíveis ao usuário final
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// CONFIGURAÇÕES FIXAS — invisíveis ao usuário
+// ═══════════════════════════════════════════════════════════
 const CONFIG = {
+  TENANT_ID:    'ee838d3c-2256-4183-beb3-7952eb4093eb',
   SP_SITE:      'https://engit.sharepoint.com/sites/BMO',
   SP_LIST_GUID: 'f3bffe4d-cc15-484c-bad3-c6ccb0db6c68',
-  SP_LIST_NAME: 'HE PJ',
   F_ID:         'IDForm',
   F_STATUS:     'Valida',
   F_DATE:       'DatadaSolicita_x00e7__x00e3_o',
   SP_LIST_URL:  'https://engit.sharepoint.com/sites/BMO/Lists/HE%20PJ/AllItems.aspx?sortField=DatadaSolicita%5Fx00e7%5F%5Fx00e3%5Fo&isAscending=true&viewid=22d44f44%2D0074%2D4b53%2Db327%2D15648eddb97f',
   PA_FLOW_URL:  'https://make.powerautomate.com/environments/Default-f2d7d6c5-1bee-41ff-9e79-b372a5cce71d/flows/shared/4840b62e-8a7e-4661-a5ed-e5814922f7a8/details',
+  // Client ID do app "SharePoint Online Client Extensibility" — público, sem registro manual
+  CLIENT_ID:    '08e18876-6177-487e-b8b5-cf950c1e598c',
+  SCOPES:       ['https://engit.sharepoint.com/AllSites.Read', 'https://engit.sharepoint.com/AllSites.Write']
 };
 
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// MSAL — autenticação Microsoft
+// ═══════════════════════════════════════════════════════════
+const msalConfig = {
+  auth: {
+    clientId: CONFIG.CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${CONFIG.TENANT_ID}`,
+    redirectUri: window.location.origin + window.location.pathname,
+  },
+  cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
+};
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+let accessToken = null;
+
+async function getToken() {
+  const accounts = msalInstance.getAllAccounts();
+  if (!accounts.length) throw new Error('Usuário não autenticado.');
+  try {
+    const resp = await msalInstance.acquireTokenSilent({ scopes: CONFIG.SCOPES, account: accounts[0] });
+    return resp.accessToken;
+  } catch {
+    const resp = await msalInstance.acquireTokenPopup({ scopes: CONFIG.SCOPES });
+    return resp.accessToken;
+  }
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  try {
+    const resp = await msalInstance.loginPopup({ scopes: CONFIG.SCOPES });
+    document.getElementById('userName').textContent = resp.account.name || resp.account.username;
+    showApp();
+    await loadData();
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg> Entrar com Microsoft`;
+    showToast('Erro ao fazer login: ' + err.message, 'error');
+  }
+}
+
+function doLogout() {
+  msalInstance.logoutPopup();
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+}
+
+// Verifica se já está logado ao carregar a página
+(async () => {
+  await msalInstance.handleRedirectPromise();
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    document.getElementById('userName').textContent = accounts[0].name || accounts[0].username;
+    showApp();
+    await loadData();
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
 // UTILITÁRIOS
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 function showLoading(msg) { $('loadingMsg').textContent = msg || 'Processando...'; $('loadingOverlay').classList.add('open'); }
 function hideLoading()    { $('loadingOverlay').classList.remove('open'); }
-
 function showToast(msg, type = 'info') {
   const c = $('toast-container'), t = document.createElement('div');
   t.className = `toast ${type}`;
@@ -368,13 +458,10 @@ function showToast(msg, type = 'info') {
   c.appendChild(t);
   setTimeout(() => t.remove(), 5000);
 }
-
 function formatDate(val) {
   if (!val) return '—';
-  try { const d = new Date(val); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
-  catch { return val; }
+  try { const d = new Date(val); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); } catch { return val; }
 }
-
 function getChip(status) {
   if (!status) return 'chip-outro';
   const s = status.toLowerCase();
@@ -386,66 +473,82 @@ function getChip(status) {
   return 'chip-outro';
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// SHAREPOINT REST API
-// ═══════════════════════════════════════════════════════════════════
-async function getDigest() {
-  const r = await fetch(`${CONFIG.SP_SITE}/_api/contextinfo`, {
-    method: 'POST',
-    headers: { 'Accept': 'application/json;odata=verbose', 'Content-Type': 'application/json' },
-    credentials: 'include'
-  });
-  if (!r.ok) throw new Error('Falha na autenticação SharePoint. Certifique-se de estar logado no Microsoft 365 neste navegador.');
-  const d = await r.json();
-  return d.d.GetContextWebInformation.FormDigestValue;
+// ═══════════════════════════════════════════════════════════
+// SHAREPOINT API (com token MSAL)
+// ═══════════════════════════════════════════════════════════
+async function spFetch(url, options = {}) {
+  const token = await getToken();
+  const headers = { 'Accept': 'application/json;odata=verbose', 'Authorization': `Bearer ${token}`, ...(options.headers || {}) };
+  const resp = await fetch(url, { ...options, headers });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => '');
+    throw new Error(`SharePoint API erro ${resp.status}: ${txt.slice(0,200)}`);
+  }
+  return resp;
 }
 
 async function fetchItems() {
   const url = `${CONFIG.SP_SITE}/_api/web/lists(guid'${CONFIG.SP_LIST_GUID}')/items` +
-    `?$select=Id,${CONFIG.F_ID},${CONFIG.F_STATUS},${CONFIG.F_DATE}` +
-    `&$orderby=${CONFIG.F_DATE} desc&$top=500`;
-  const r = await fetch(url, { headers: { 'Accept': 'application/json;odata=verbose' }, credentials: 'include' });
-  if (!r.ok) throw new Error(`Erro ao buscar dados (${r.status}). Verifique se está logado no SharePoint.`);
-  const d = await r.json();
-  return d.d.results;
+    `?$select=Id,${CONFIG.F_ID},${CONFIG.F_STATUS},${CONFIG.F_DATE}&$orderby=${CONFIG.F_DATE} desc&$top=500`;
+  const resp = await spFetch(url);
+  const data = await resp.json();
+  return data.d.results;
 }
 
 async function deleteByIDForm(idForm) {
   const searchUrl = `${CONFIG.SP_SITE}/_api/web/lists(guid'${CONFIG.SP_LIST_GUID}')/items` +
     `?$filter=${CONFIG.F_ID} eq ${idForm}&$select=Id`;
-  const sr = await fetch(searchUrl, { headers: { 'Accept': 'application/json;odata=verbose' }, credentials: 'include' });
-  if (!sr.ok) throw new Error(`Erro ao localizar item (${sr.status})`);
+  const sr = await spFetch(searchUrl);
   const sd = await sr.json();
   const items = sd.d.results;
   if (!items || items.length === 0) throw new Error(`ID ${idForm} não encontrado na lista HE PJ.`);
-  const digest = await getDigest();
+
+  // Obter digest com token
+  const token = await getToken();
+  const ctxResp = await fetch(`${CONFIG.SP_SITE}/_api/contextinfo`, {
+    method: 'POST',
+    headers: { 'Accept': 'application/json;odata=verbose', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+  });
+  const ctxData = await ctxResp.json();
+  const digest = ctxData.d.GetContextWebInformation.FormDigestValue;
+
   for (const item of items) {
-    const dr = await fetch(`${CONFIG.SP_SITE}/_api/web/lists(guid'${CONFIG.SP_LIST_GUID}')/items(${item.Id})`, {
+    await spFetch(`${CONFIG.SP_SITE}/_api/web/lists(guid'${CONFIG.SP_LIST_GUID}')/items(${item.Id})`, {
       method: 'DELETE',
-      headers: { 'Accept': 'application/json;odata=verbose', 'X-RequestDigest': digest, 'IF-MATCH': '*' },
-      credentials: 'include'
+      headers: { 'X-RequestDigest': digest, 'IF-MATCH': '*' }
     });
-    if (!dr.ok) throw new Error(`Erro ao excluir item ${item.Id} (${dr.status})`);
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // RENDER
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+async function loadData() {
+  showLoading('Carregando dados do SharePoint...');
+  try {
+    const items = await fetchItems();
+    renderDashboard(items);
+  } catch (err) {
+    showToast('Erro ao carregar dados: ' + err.message, 'error');
+    renderDashboard([]);
+  } finally {
+    hideLoading();
+  }
+}
+
 function renderDashboard(items) {
   let aprovado=0, pend1=0, pend2=0, pend3=0, reprovado=0;
   items.forEach(item => {
     const s = (item[CONFIG.F_STATUS] || '').toLowerCase();
-    if (s.includes('reprov'))                              reprovado++;
+    if (s.includes('reprov'))                               reprovado++;
     else if (!s.includes('pend') && s.includes('aprovado')) aprovado++;
-    else if (s.includes('1'))                              pend1++;
-    else if (s.includes('2'))                              pend2++;
-    else if (s.includes('3'))                              pend3++;
-    else                                                   pend1++;
+    else if (s.includes('1'))                               pend1++;
+    else if (s.includes('2'))                               pend2++;
+    else if (s.includes('3'))                               pend3++;
+    else                                                    pend1++;
   });
   const total = items.length || 1;
   const pct = v => ((v/total)*100).toFixed(1)+'%';
-
   $('kpiTotal').textContent  = items.length;
   $('kpiAprov').textContent  = aprovado;
   $('kpiPend1').textContent  = pend1;
@@ -462,7 +565,6 @@ function renderDashboard(items) {
   $('segPend2').style.width  = pct(pend2);
   $('segPend3').style.width  = pct(pend3);
   $('segReprov').style.width = pct(reprovado);
-
   renderTable(items);
   $('lastUpdate').textContent = 'Última atualização: ' + new Date().toLocaleString('pt-BR');
 }
@@ -470,16 +572,15 @@ function renderDashboard(items) {
 function renderTable(items) {
   const tbody = $('itemsTableBody'), empty = $('emptyState');
   $('totalCount').textContent = `${items.length} itens`;
-  if (!items.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  if (!items.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   tbody.innerHTML = items.map(item => {
-    const idForm  = item[CONFIG.F_ID]     || '—';
-    const status  = item[CONFIG.F_STATUS] || 'Indefinido';
-    const date    = formatDate(item[CONFIG.F_DATE]);
-    const chip    = getChip(status);
+    const idForm = item[CONFIG.F_ID] || '—';
+    const status = item[CONFIG.F_STATUS] || 'Indefinido';
+    const date   = formatDate(item[CONFIG.F_DATE]);
     return `<tr>
       <td class="id-cell">${idForm}</td>
-      <td><span class="status-chip ${chip}">${status}</span></td>
+      <td><span class="status-chip ${getChip(status)}">${status}</span></td>
       <td class="ts-cell">${date}</td>
       <td><button class="sel-btn" onclick="preencherID(${idForm})">Selecionar</button></td>
     </tr>`;
@@ -489,25 +590,19 @@ function renderTable(items) {
 function preencherID(id) {
   $('idInput').value = id;
   validateForm();
-  $('idInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $('idInput').scrollIntoView({ behavior:'smooth', block:'center' });
   $('idInput').focus();
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // AÇÕES
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 async function refreshData() {
   const btn = $('refreshBtn');
   btn.classList.add('spinning');
-  try {
-    const items = await fetchItems();
-    renderDashboard(items);
-    showToast('Dados atualizados com sucesso.', 'success');
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    btn.classList.remove('spinning');
-  }
+  try { const items = await fetchItems(); renderDashboard(items); showToast('Dados atualizados.', 'success'); }
+  catch (err) { showToast(err.message, 'error'); }
+  finally { btn.classList.remove('spinning'); }
 }
 
 function validateForm() {
@@ -527,11 +622,9 @@ async function handleDelete() {
     await refreshData();
     return true;
   } catch (err) {
-    showToast(`Erro: ${err.message}`, 'error');
+    showToast('Erro: ' + err.message, 'error');
     return false;
-  } finally {
-    hideLoading();
-  }
+  } finally { hideLoading(); }
 }
 
 function confirmReprocessamento() {
@@ -540,7 +633,6 @@ function confirmReprocessamento() {
   $('modalId').textContent = id;
   $('modalOverlay').classList.add('open');
 }
-
 function closeModal() { $('modalOverlay').classList.remove('open'); }
 
 async function executeReprocessamento() {
@@ -560,22 +652,6 @@ function openPowerAutomate() { window.open(CONFIG.PA_FLOW_URL, '_blank'); }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 $('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-
-// ═══════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════
-(async () => {
-  showLoading('Conectando ao SharePoint...');
-  try {
-    const items = await fetchItems();
-    renderDashboard(items);
-  } catch (err) {
-    showToast('⚠️ ' + err.message, 'error');
-    renderDashboard([]);
-  } finally {
-    hideLoading();
-  }
-})();
 </script>
 </body>
 </html>
